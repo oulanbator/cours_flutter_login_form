@@ -1,4 +1,6 @@
+import 'package:cours_flutter_login_form/service/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +15,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    var authService = Provider.of<AuthService>(context, listen: false);
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -37,21 +41,23 @@ class _LoginPageState extends State<LoginPage> {
                 var username = usernameController.text;
                 var password = passwordController.text;
 
-                if (username == "admin" && password == "password") {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      duration: Duration(seconds: 0),
-                      content: Text("Success"),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      duration: Duration(seconds: 0),
-                      content: Text("Error"),
-                    ),
-                  );
-                }
+                authService.login(username, password, context);
+
+                // if (username == "admin" && password == "password") {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     const SnackBar(
+                //       duration: Duration(seconds: 0),
+                //       content: Text("Success"),
+                //     ),
+                //   );
+                // } else {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     const SnackBar(
+                //       duration: Duration(seconds: 0),
+                //       content: Text("Error"),
+                //     ),
+                //   );
+                // }
               },
               child: Text("Login"),
             )
