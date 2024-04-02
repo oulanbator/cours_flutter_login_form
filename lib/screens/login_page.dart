@@ -15,8 +15,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    var authService = Provider.of<AuthService>(context, listen: false);
-
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -28,42 +26,29 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Email"),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Password"),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
-                var username = usernameController.text;
-                var password = passwordController.text;
-
-                authService.login(username, password, context);
-
-                // if (username == "admin" && password == "password") {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     const SnackBar(
-                //       duration: Duration(seconds: 0),
-                //       content: Text("Success"),
-                //     ),
-                //   );
-                // } else {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     const SnackBar(
-                //       duration: Duration(seconds: 0),
-                //       content: Text("Error"),
-                //     ),
-                //   );
-                // }
-              },
+              onPressed: () => _submitForm(),
               child: Text("Login"),
             )
           ],
         ),
       ),
     );
+  }
+
+  void _submitForm() {
+    var authService = Provider.of<AuthService>(context, listen: false);
+
+    var username = usernameController.text;
+    var password = passwordController.text;
+    authService.login(username, password, context);
   }
 }
