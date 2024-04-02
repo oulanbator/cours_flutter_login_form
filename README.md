@@ -64,10 +64,36 @@ Nous devons maintenant revoir l'implémentation de la méthode login (AuthServic
 var headers = {'Content-Type': 'application/json; charset=utf-8'};
 ```
 
-- Implémentez l'appel HTTP (POST) et la gestion de la réponse. Pour le moment nous souhaitons uniquement faire ceci en cas de succès (HTTP 200) :
+- Implémentez l'appel HTTP (POST) et la gestion de la réponse. Aidez-vous des appels POST que nous avons fait dans les précédents TP.
+
+
+Pour le moment nous souhaitons princiaplement faire ceci en cas de succès (HTTP 200) :
 ```
 isLoggedIn = true;
 notifyListeners();
+```
+
+- Nous pouvons toutefois rendre notre application un peu plus intéractive en renvoyant un message... (AuthService)
+```
+if (response.statusCode == 200) {
+  isLoggedIn = true;
+  notifyListeners();
+  return "Vous êtes connecté !";
+} else {
+  return "Failed to login: ${response.statusCode}";
+}
+```
+
+- ...que l'on affichera avec un ScaffoldMessenger (LoginPage) :
+```
+authService.login(credential).then((message) {
+  return ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      duration: const Duration(seconds: 1),
+      content: Text(message),
+    ),
+  );
+});
 ```
 
 ## Exercice 4 - Gestion du token
