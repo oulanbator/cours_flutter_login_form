@@ -93,3 +93,14 @@ class AuthResult {
 ```
 
 Vous pouvez explorer les réponses d'erreur pour impléter des classes utilitaires pour ces cas de figure si vous le souhaitez.
+
+
+```
+// Map<String, dynamic> responseBody = json.decode(response.body);
+// Map<String, dynamic> data = responseBody['data'];
+// var result = AuthResult.fromJson(data);
+// if (result.accessToken != null) {
+//   isLoggedIn = true;
+//   notifyListeners();
+// }
+```
