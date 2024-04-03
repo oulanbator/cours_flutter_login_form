@@ -15,6 +15,68 @@ class AuthService extends ChangeNotifier {
   String? _accessTokenExpiration;
   String? _refreshToken;
 
+  AuthService() {
+    _initAuthService();
+  }
+
+  Future<void> _initAuthService() async {
+    // Récupère les valeurs dans le storage
+    _accessToken =
+        await secureStorage.read(key: Constants.storageKeyAccessToken);
+    _accessTokenExpiration =
+        await secureStorage.read(key: Constants.storageKeyTokenExpire);
+    _refreshToken =
+        await secureStorage.read(key: Constants.storageKeyRefreshToken);
+
+    // Si le token est valide, on peut modifier isLoggedIn et notifier les listeners
+    if (_isTokenValid()) {
+      isLoggedIn = true;
+      notifyListeners();
+    } else {
+      // Sinon, essayer de rafraichir le token
+      await _tryToRefreshTokenAndLogin();
+    }
+  }
+
+  bool _isTokenValid() {
+    // Si nous avons un token et une date d'expiration, vérifier si le token est encore valide
+    if (_accessToken != null && _accessTokenExpiration != null) {
+      final expirationTime = DateTime.parse(_accessTokenExpiration!);
+      // Le token est valide si la date d'expiration est dans le futur
+      return expirationTime.isAfter(DateTime.now());
+    }
+    // Sinon, renvoie false
+    return false;
+  }
+
+  Future<void> _tryToRefreshTokenAndLogin() async {
+    bool tokenRefreshed = await _tryToRefreshToken();
+    if (tokenRefreshed) {
+      isLoggedIn = true;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> _tryToRefreshToken() async {
+    bool success = false;
+    final headers = {'Content-Type': 'application/json; charset=utf-8'};
+    final body = {"refresh_token": _refreshToken!, "mode": "json"};
+
+    final response = await http.post(
+      Uri.parse(Constants.uriRefreshToken),
+      headers: headers,
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      var authResponse = AuthResponse.fromJson(json.decode(response.body));
+      await _handleSuccessAuthResponse(authResponse);
+      success = true;
+    }
+
+    return success;
+  }
+
   Future<String> login(Credential credential) async {
     var headers = {'Content-Type': 'application/json; charset=utf-8'};
 
@@ -86,6 +148,18 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<String> _getAccessToken() async {
-    return _accessToken!;
+    if (_isTokenValid()) {
+      return _accessToken!;
+    }
+    // Si le token n'est pas valide, on essaie de refresh
+    bool tokenRefreshed = await _tryToRefreshToken();
+    if (tokenRefreshed) {
+      return _accessToken!;
+    }
+    // Ce cas de figure ne devrais logiquement jamais arriver, mais si lorques
+    // l'on essaie de récupérer des headers : le token n'est pas valide, et l'on
+    // ne parvient pas à refresh. On devrait forcer la déconnexion.
+    logout();
+    return "";
   }
 }
