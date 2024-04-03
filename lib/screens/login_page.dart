@@ -1,3 +1,4 @@
+import 'package:cours_flutter_login_form/model/credential.dart';
 import 'package:cours_flutter_login_form/service/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +11,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +23,13 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
-              controller: usernameController,
+              controller: _emailController,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Email"),
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: passwordController,
+              controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
                   border: OutlineInputBorder(), labelText: "Password"),
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _submitForm(),
-              child: Text("Login"),
+              child: const Text("Login"),
             )
           ],
         ),
@@ -47,8 +48,18 @@ class _LoginPageState extends State<LoginPage> {
   void _submitForm() {
     var authService = Provider.of<AuthService>(context, listen: false);
 
-    var username = usernameController.text;
-    var password = passwordController.text;
-    authService.login(username, password, context);
+    var credential = Credential(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    authService.login(credential).then((message) {
+      return ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 1),
+          content: Text(message),
+        ),
+      );
+    });
   }
 }

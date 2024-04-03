@@ -1,27 +1,29 @@
+import 'dart:convert';
+
+import 'package:cours_flutter_login_form/constants.dart';
+import 'package:cours_flutter_login_form/model/credential.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class AuthService extends ChangeNotifier {
   bool isLoggedIn = false;
 
-  void login(String username, String password, BuildContext context) {
-    if (username == "admin" && password == "password") {
-      isLoggedIn = true;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          duration: Duration(seconds: 1),
-          content: Text("Success"),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          duration: Duration(seconds: 1),
-          content: Text("Error"),
-        ),
-      );
-    }
+  Future<String> login(Credential credential) async {
+    var headers = {'Content-Type': 'application/json; charset=utf-8'};
 
-    notifyListeners();
+    final response = await http.post(
+      Uri.parse(Constants.uriAuthentification),
+      headers: headers,
+      body: jsonEncode(credential.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      isLoggedIn = true;
+      notifyListeners();
+      return "Vous êtes connecté !";
+    } else {
+      return "Failed to login: ${response.statusCode}";
+    }
   }
 
   void logout() {
