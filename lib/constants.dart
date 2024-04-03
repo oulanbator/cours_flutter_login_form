@@ -1,6 +1,7 @@
 class Constants {
   static String apiBaseUrl = "https://bdew32324.webturtle.fr";
   static String uriAuthentification = "$apiBaseUrl/auth/login";
+  static String uriArticles = "$apiBaseUrl/items/articles";
   static String uriLogout = "$apiBaseUrl/auth/logout";
 
   static String storageKeyAccessToken = "bdew32324.access_token";
