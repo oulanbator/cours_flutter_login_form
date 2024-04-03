@@ -15,11 +15,11 @@ flutter pub add provider
 ```
 
 Le service d'authentification ne va pas communiquer avec un backend dans cet exercice. Il va donc être relativement simple pour le moment :
-- il doit être fournit à l'ensemble de notre application et doit donc **extend ChangeNotifier**
+- il doit être fourni à l'ensemble de notre application et doit donc **extend ChangeNotifier**
 - il contient une propriété isLoggedIn (bool) qui va permettre de savoir si l'on est authentifié ou non
-- il contient une méthode **login()** qui valide les identifiants "admin/password"
+- il contient une méthode **login()** qui valide les identifiants "admin" / "password"
 - il contient une méthode **logout()**
-- login et logout vont intéragir avec **isLoggedIn** et **notifier les listener** de notre service (pour appeler un nouveau rendu)
+- login et logout vont mettre à jour **isLoggedIn** et **notifier les listener** de notre service (pour appeler un nouveau rendu).
 
 Nous devons fournir de service à l'ensemble de notre application avec **ChangeNotifierProvider** :
 - modifier la fonction **main()** pour refléter cela
@@ -28,8 +28,9 @@ Nous devons rediriger l'utilisateur vers **LoginPage** ou **HomePage** en foncti
 - pour faire simple nous pouvons implémenter cela directement dans le fichier app.dart
 - mettez en place la logique à l'aide de **Consumer**
 
-Enfin, lors de la soumission ddu formulaire de connexion, **LoginPage** doit intéragir avec **AuthService** afin de valider les identifiants fournis :
+Lors de la soumission du formulaire de connexion, **LoginPage** doit intéragir avec **AuthService** afin de valider les identifiants fournis (appel à la méthode login) :
 - Implémentez cette logique
+
 
 #### Tips :
 > Si besoin, aidez-vous des éléments vu dans [le TP sur le Panie de commandes](https://github.com/oulanbator/cours_flutter_panier_de_commandes)
