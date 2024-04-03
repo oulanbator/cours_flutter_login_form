@@ -552,9 +552,9 @@ Future<String> _getAccessToken() async {
   if (tokenRefreshed) {
     return _accessToken!;
   }
-  // Ce cas de figure ne devrais logiquement jamais arriver, mais si lorques
-  // l'on essaie de récupérer des headers : le token n'est pas valide, et l'on
-  // ne parvient pas à refresh. On devrait forcer la déconnexion.
+  // Ce cas de figure ne devrais logiquement jamais arriver, mais si lorsque
+  // l'on essaie de récupérer des headers : 1) le token n'est pas valide, et 2) on
+  // ne parvient pas à refresh. Alors, on devrait probablement forcer la déconnexion.
   logout();
   return "";
 }
