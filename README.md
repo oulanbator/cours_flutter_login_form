@@ -101,23 +101,36 @@ authService.login(credential).then((message) {
 
 ## Exercice 4 - Gestion du token
 
-Nous allons également vouloir une classe utilitaire pour recevoir la réponse de l'API. Après avoir observé cette réponse via un client HTTP, je vous donne le code pour cette classe. Attention cette classe n'est adaptée que pour un appel HTTP réussi (200) :
+A ce stade, nous avons une application avec une page Home protégée, on ne peut y accéder qu'une fois connecté. Mais il nous faut également protéger les ressources de notre API. Pour cela les requêtes doivent être authentifiées à l'aide du token que nous avons reçu lors de la connexion (pour le moment on n'a fait que réagir à une réponse HTTP 200, sans se préoccuper du contenu de la réponse).
+
+Nous allons utiliser une classe utilitaire pour recevoir la réponse de l'API. Voici cette réponse :
 ```
-class AuthResult {
+{
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsIns5x8AnvwXk(...)",
+    "expires": 900000,
+    "refresh_token": "WQaii2GNVYhLsUb89rIU0Wt2mcewFBW-nt5GTBons(...)"
+  }
+}
+```
+
+Je vous donne le code pour l'objet métier dont nous avons besoin. Attention cette classe n'est adaptée que pour un appel HTTP réussi (200) :
+```
+class AuthResponse {
   final String accessToken;
   final String refreshToken;
   final int expires;
 
-  AuthResult({
+  AuthResponse({
     required this.accessToken,
     required this.refreshToken,
     required this.expires,
   });
 
-  AuthResult.fromJson(Map<String, dynamic> json)
-      : accessToken = json['data']['access_token'],
-        refreshToken = json['data']['refresh_token'],
-        expires = json['data']['expires'];
+  AuthResponse.fromJson(Map<String, dynamic> json)
+      : accessToken = json['access_token'],
+        refreshToken = json['refresh_token'],
+        expires = json['expires'];
 }
 ```
 
