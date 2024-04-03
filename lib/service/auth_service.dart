@@ -76,4 +76,16 @@ class AuthService extends ChangeNotifier {
     isLoggedIn = false;
     notifyListeners();
   }
+
+  Future<Map<String, String>> getAuthenticatedHeaders() async {
+    String accessToken = await _getAccessToken();
+    return {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json; charset=utf-8'
+    };
+  }
+
+  Future<String> _getAccessToken() async {
+    return _accessToken!;
+  }
 }

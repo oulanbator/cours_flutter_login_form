@@ -9,6 +9,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var auth = Provider.of<AuthService>(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -22,7 +24,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: FutureBuilder(
-        future: ArticleService().fetchArticles(),
+        future: ArticleService(authService: auth).fetchArticles(),
         builder: ((context, snapshot) {
           // Si la data se charge correctement
           if (snapshot.hasData) {
