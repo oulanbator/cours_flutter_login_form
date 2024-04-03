@@ -346,13 +346,94 @@ void logout() async {
 
 Ouf !! Apparement, il n'y a pas grand chose qui a bougé.. on peut toujours se connecter et se déconnecter... mais maintenant nous avons un token pour faire des requêtes authentifiées !!
 
-> Il sera probablement nécessaire à se stade de stop puis relancer votre application !
+> Il sera probablement nécessaire à se stade de stoper puis relancer votre application !
 
+
+## Exercice 5 - Authentifier une requête
+
+L'authentification d'une requête se fait au travers des headers. Afin de permettre à tous nos services d'authentifier leurs requêtes, nous allons centraliser la création de ces headers dans notre AuthService.
+
+- Créer une méthode pour obtenir les headers :
+```
+Future<Map<String, String>> getAuthenticatedHeaders() async {
+  final accessToken = await _getAccessToken();
+  return {
+    'Authorization': 'Bearer $accessToken',
+    'Content-Type': 'application/json; charset=utf-8'
+  };
+}
+```
+
+> Notez que l'on ne renvoie pas directement notre **_accessToken**. En effet, celui-ci pourrait être expiré.
+
+Nous verrons plus loin la logique liée au rafraichissement du token. Pour le moment, renvoyons juste le token que nous avons stocké :
+```
+Future<String> _getAccessToken() async {
+  return _accessToken!;
+}
+```
+
+Maintenant nous allons utiliser ces headers dans notre ArticleService afin d'authentifier la requête.
+
+- Ajouter une propriété pour injecter AuthService dans notre ArticleService, ainsi qu'un constructeur adapté :
+```
+final AuthService authService;
+ArticleService({required this.authService});
+```
+
+- Mettre à jour la méthode **fetchArticles()** pour passer les headers lors de notre requête :
+```
+Future<List<Article>> fetchArticles() async {
+  var headers = await authService.getAuthenticatedHeaders(); // Ici
+
+  final response = await http.get(Uri.parse(Constants.uriArticles), headers: headers); // Et Ici
+
+  if (response.statusCode == 200) {
+    return parseArticles(response.body);
+  } else {
+    throw Exception(
+        'Failed to load articles. Status : ${response.statusCode}');
+  }
+}
+```
+
+Nous devons enfin passer notre AuthService lors de l'instanciation de ArticleService (dans le widget HomePage).
+
+- Récupérer le AuthService avec **Provider.of** : 
+```
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var auth = Provider.of<AuthService>(context); // Ici
+
+(... reste de notre code ...)
+```
+
+- Injecter le service lors de l'intanciation de ArticleService
+```
+body: FutureBuilder(
+  future: ArticleService(authService: auth).fetchArticles(), // Ici
+  builder: ((context, snapshot) {
+    // Si la data se charge correctement
+    if (snapshot.hasData) {
+      List<Article> articles = snapshot.data!;
+      return ListView.builder(
+        itemCount: articles.length,
+        itemBuilder: (context, index) => _listElement(articles[index]),
+      );
+    }
+(... reste de notre code ...)
+```
+
+-
 ```
 
 ```
 
-
+-
 ```
 
 ```
+
