@@ -98,7 +98,7 @@ authService.login(credential).then((message) {
 });
 ```
 
-## Exercice 4 - Gestion du token
+## Exercice 4 - Gestion des tokens
 
 A ce stade, nous avons une application avec une page Home protégée, on ne peut y accéder qu'une fois connecté. Mais il nous faut également protéger les ressources de notre API. Pour cela les requêtes doivent être authentifiées à l'aide du token que nous avons reçu lors de la connexion (pour le moment on n'a fait que réagir à une réponse HTTP 200, sans se préoccuper du contenu de la réponse).
 
@@ -148,7 +148,7 @@ if (response.statusCode == 200) {
 }
 ```
 
-> Nous allons tout de suite créer la méthode **_handleSuccessAuthResponse()**
+> Nous allons tout de suite créer la méthode **_handleSuccessAuthResponse()** (notez qu'elle est asynchrone)
 
 Ce que nous voulons c'est stocker les informations que nous avons reçues. Nous avons besoin de les stocker dans notre AuthService pour pouvoir les utiliser pendant que l'application est ouverte, et les stocker de manière plus durable si l'on souhaite garder en mémoire ces informations pour les prochaines fois où l'on ouvre l'application.
 
@@ -167,14 +167,39 @@ String? _accessTokenExpiration;
 String? _refreshToken;
 ```
 
-
+- Ajoutez ces clés à vos constantes pour éviter toute faute de frappe par la suite (leur valeur n'a pas vraiment d'importance, mais doit être unique)
+```
+static String storageKeyAccessToken = "bdew32324.access_token";
+static String storageKeyRefreshToken = "bdew32324.refresh_token";
+static String storageKeyTokenExpire = "bdew32324.token_expiration";
 ```
 
+- implémenter **_handleSuccessAuthResponse()**
 ```
-
-
-```
-
+Future<void> _handleSuccessAuthResponse(AuthResponse authResponse) async {
+  // Set les variables dans auth manager
+  _accessToken = authResponse.accessToken;
+  _refreshToken = authResponse.refreshToken;
+  // La réponse nous donne le temps de validité du token,
+  // Mais ce que nous souhaitons stocker c'est sa date d'expiration
+  DateTime expirationTime =
+      DateTime.now().add(Duration(milliseconds: authResponse.expires));
+  _accessTokenExpiration = expirationTime.toString();
+  
+  // Store values dans secure storage
+  await secureStorage.write(
+    key: Constants.storageKeyAccessToken,
+    value: _accessToken!,
+  );
+  await secureStorage.write(
+    key: Constants.storageKeyTokenExpire,
+    value: _accessTokenExpiration!,
+  );
+  await secureStorage.write(
+    key: Constants.storageKeyRefreshToken,
+    value: _refreshToken!,
+  );
+}
 ```
 
 
