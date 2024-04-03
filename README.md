@@ -507,10 +507,14 @@ Future<void> _tryToRefreshTokenAndLogin() async {
 }
 ```
 
+> Noubliez pas de décommenter la ligne "// _tryToRefreshTokenAndLogin();" dans **_initAuthService()**;
+
 - Implémentez également la méthode **_tryToRefreshToken()** :
 ```
 Future<bool> _tryToRefreshToken() async {
-  bool success = false;
+  // On n'essaie de refresh que si on a un refreshToken disponible
+  if (_refreshToken == null) return false;
+
   final headers = {'Content-Type': 'application/json; charset=utf-8'};
   final body = {"refresh_token": _refreshToken!, "mode": "json"};
 
@@ -520,6 +524,7 @@ Future<bool> _tryToRefreshToken() async {
     body: json.encode(body),
   );
 
+  bool success = false;
   if (response.statusCode == 200) {
     var authResponse = AuthResponse.fromJson(json.decode(response.body));
     await _handleSuccessAuthResponse(authResponse);
