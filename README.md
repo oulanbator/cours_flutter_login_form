@@ -432,8 +432,9 @@ Mais nous n'avons pas tout à fait fini..
 
 ## Exercice 6 - Restaurer notre session grâce au secure storage, et gérer le rafraîchissement du token
 
-Bon nous y sommes presque mais il reste deux problèmes à régler. 
-Essayez (sous android ?) de vous authentifier, de fermer l'application lorsque vous êtes connectés, puis de relancer l'App. Que se passe t'il ?
+Bon nous y sommes presque mais il reste deux problèmes à régler..
+
+Tout d'abord, essayez (sous android ?) de vous authentifier, de fermer l'application lorsque vous êtes connectés, puis de relancer l'App. Que se passe t'il ?
 
 > Ce comportement pourrait être souhaitable pour une application hautement sensible. D'ailleurs, généralement les application bancaires, ou plus généralement liées au paiement, vous obligent à vous identifier à nouveau dès lors que l'application a été fermée, voire même lorsque vous l'avez 'minimisée' pendant trop longtemps. 
 
@@ -484,23 +485,74 @@ bool _isTokenValid() {
 }
 ```
 
--
+Notre premier problème est (quasiment) réglé. En l'état si vous fermez l'application et que vous la relancez, votre session devrait être restaurée. En effet, lors de son instanciation, AuthService va tenter de rétablir la session à partir des informations dans le secure storage, et si le token est encore valide, il va passer **isLoggedIn** à true !
+
+Terminons le travail. Il reste à rafraichir le token s'il est expiré, pour cela nous allons nous servir du refreshToken que nous avons aussi gardé en mémoire. 
+
+> Cette partie est plus difficilement testable (il faudrait attendre 15 minutes que notre accesToken expire).. Il va falloir me croire sur parole, je l'ai testé pour vous... En l'état, au bout de 15 minutes notre problème ressurgit !
+
+- Ajouter cette variable à vos constantes :
+```
+static String uriRefreshToken = "$apiBaseUrl/auth/refresh";
 ```
 
+- Implémentez la méthode **_tryToRefreshTokenAndLogin()** :
+```
+Future<void> _tryToRefreshTokenAndLogin() async {
+  bool tokenRefreshed = await _tryToRefreshToken();
+  if (tokenRefreshed) {
+    isLoggedIn = true;
+    notifyListeners();
+  }
+}
 ```
 
--
+- Implémentez également la méthode **_tryToRefreshToken()** :
+```
+Future<bool> _tryToRefreshToken() async {
+  bool success = false;
+  final headers = {'Content-Type': 'application/json; charset=utf-8'};
+  final body = {"refresh_token": _refreshToken!, "mode": "json"};
+
+  final response = await http.post(
+    Uri.parse(Constants.uriRefreshToken),
+    headers: headers,
+    body: json.encode(body),
+  );
+
+  if (response.statusCode == 200) {
+    var authResponse = AuthResponse.fromJson(json.decode(response.body));
+    await _handleSuccessAuthResponse(authResponse);
+    success = true;
+  }
+
+  return success;
+}
 ```
 
+Une fois de plus nous avons séparé ces deux méthodes pour des questions de naming et parce que nous allons nous resservir de **_tryToRefreshToken()**..
+
+Un dernier point à régler, vous vous souvenez que l'on a pas fini d'implémenter **_getAccessToken()** lorsque nous voulions récupérer les headers pour faire une requête authentifiée ?
+
+C'est la dernière étape pour avoir un vrai service d'authentification pleinement fonctionnel !
+
+- Implémentez **_getAccessToken()**, les commentaires sont dans le code :
+```
+Future<String> _getAccessToken() async {
+  if (_isTokenValid()) {
+    return _accessToken!;
+  }
+  // Si le token n'est pas valide, on essaie de refresh
+  bool tokenRefreshed = await _tryToRefreshToken();
+  if (tokenRefreshed) {
+    return _accessToken!;
+  }
+  // Ce cas de figure ne devrais logiquement jamais arriver, mais si lorques
+  // l'on essaie de récupérer des headers : le token n'est pas valide, et l'on
+  // ne parvient pas à refresh. On devrait forcer la déconnexion.
+  logout();
+  return "";
+}
 ```
 
--
-```
-
-```
-
--
-```
-
-```
-
+Bravo ! Tout devrait fonctionner maintenant, c'est vraiment fini :) ! 
