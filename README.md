@@ -434,7 +434,7 @@ Mais nous n'avons pas tout à fait fini..
 
 Bon nous y sommes presque mais il reste deux problèmes à régler..
 
-Tout d'abord, essayez (sous android ?) de vous authentifier, de fermer l'application lorsque vous êtes connectés, puis de relancer l'App. Que se passe t'il ?
+Tout d'abord, essayez de vous authentifier, de fermer l'application (stoppez complètement le debug) lorsque vous êtes connectés, puis de relancer l'App. Que se passe t'il ?
 
 > Ce comportement pourrait être souhaitable pour une application hautement sensible. D'ailleurs, généralement les application bancaires, ou plus généralement liées au paiement, vous obligent à vous identifier à nouveau dès lors que l'application a été fermée, voire même lorsque vous l'avez 'minimisée' pendant trop longtemps. 
 
