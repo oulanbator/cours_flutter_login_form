@@ -69,7 +69,6 @@ var headers = {'Content-Type': 'application/json; charset=utf-8'};
 
 - Implémentez l'appel HTTP (POST) et la gestion de la réponse. Aidez-vous des appels POST que nous avons fait dans les précédents TP.
 
-
 Pour le moment nous souhaitons princiaplement faire ceci en cas de succès (HTTP 200) :
 ```
 isLoggedIn = true;
@@ -128,21 +127,57 @@ class AuthResponse {
   });
 
   AuthResponse.fromJson(Map<String, dynamic> json)
-      : accessToken = json['access_token'],
-        refreshToken = json['refresh_token'],
-        expires = json['expires'];
+      : accessToken = json['data']['access_token'],
+        refreshToken = json['data']['refresh_token'],
+        expires = json['data']['expires'];
 }
 ```
 
-Vous pouvez explorer les réponses d'erreur pour impléter des classes utilitaires pour ces cas de figure si vous le souhaitez.
+> Notez que je parse directement **json > data > ...**. Cela va nous permettre d'écrire plus simplement notre méthode pour parser la réponse.
+
+- Parsez les informations reçues grâce à cette classe utilitaire :
+```
+if (response.statusCode == 200) {
+  var authResponse = AuthResponse.fromJson(json.decode(response.body));
+  await _handleSuccessAuthResponse(authResponse);
+  isLoggedIn = true;
+  notifyListeners();
+  return "Vous êtes connecté !";
+} else {
+  return "Failed to login: ${response.statusCode}";
+}
+```
+
+> Nous allons tout de suite créer la méthode **_handleSuccessAuthResponse()**
+
+Ce que nous voulons c'est stocker les informations que nous avons reçues. Nous avons besoin de les stocker dans notre AuthService pour pouvoir les utiliser pendant que l'application est ouverte, et les stocker de manière plus durable si l'on souhaite garder en mémoire ces informations pour les prochaines fois où l'on ouvre l'application.
+
+Il y a plusieurs type de "local storage". Pour des données légères et non sensibles il y a par exemple le package shared_preferences qui implémente des fonctions utilitaires. Mais dans le cas d'informations sensibles comme ici, nous avons besoin de stocker les informations encryptées. Nous allons donc nous servir de flutter_secure_storage.
+
+- installer le package :
+```
+flutter pub add flutter_secure_storage
+```
+
+- dans notre service, nous allons créer trois propriétés pour stocker les éléments reçus, et instancier le secure storage :
+```
+final secureStorage = const FlutterSecureStorage();
+String? _accessToken;
+String? _accessTokenExpiration;
+String? _refreshToken;
+```
 
 
 ```
-// Map<String, dynamic> responseBody = json.decode(response.body);
-// Map<String, dynamic> data = responseBody['data'];
-// var result = AuthResult.fromJson(data);
-// if (result.accessToken != null) {
-//   isLoggedIn = true;
-//   notifyListeners();
-// }
+
+```
+
+
+```
+
+```
+
+
+```
+
 ```
