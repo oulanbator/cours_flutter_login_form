@@ -507,8 +507,6 @@ Future<void> _tryToRefreshTokenAndLogin() async {
 }
 ```
 
-> Noubliez pas de décommenter la ligne "// _tryToRefreshTokenAndLogin();" dans **_initAuthService()**;
-
 - Implémentez également la méthode **_tryToRefreshToken()** :
 ```
 Future<bool> _tryToRefreshToken() async {
@@ -534,6 +532,8 @@ Future<bool> _tryToRefreshToken() async {
   return success;
 }
 ```
+
+> Noubliez pas de décommenter la ligne "// _tryToRefreshTokenAndLogin();" dans **_initAuthService()**;
 
 Une fois de plus nous avons séparé ces deux méthodes pour des questions de naming et parce que nous allons nous resservir de **_tryToRefreshToken()**..
 
