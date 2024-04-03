@@ -1,7 +1,7 @@
 # TP : Formulaire de login
 
 
-## Exercice 1 - Création du formulaire
+## Exercice 1 - Création du formulaire de login
 
 - Modifier le widget Login page pour qu'il ait un champ username et password, et un bouton de connexion
 - Il est nécessaire de 'suivre' la valeur des champs pour pouvoir les envoyer au service d'authentification lors de la validation du formulaire. Choisissez l'implémentation qui vous convient le mieux (onChange, controllers, Form avec validation, ...)
@@ -28,9 +28,11 @@ Nous devons rediriger l'utilisateur vers **LoginPage** ou **HomePage** en foncti
 - pour faire simple nous pouvons implémenter cela directement dans le fichier app.dart
 - mettez en place la logique à l'aide de **Consumer**
 
-Lors de la soumission du formulaire de connexion, **LoginPage** doit intéragir avec **AuthService** afin de valider les identifiants fournis (appel à la méthode login) :
+Lors de la soumission du formulaire de connexion, **LoginPage** doit intéragir avec **AuthService** afin de valider les identifiants fournis (appel à la méthode **login()**) :
 - Implémentez cette logique
 
+Enfin, ajoutez un bouton ou un IconButton (dans l'AppBar par exemple) afin de se déconnecter :
+- ce bouton doit également intéragir avec **AuthService** (appel de la méthode **logout()**)
 
 #### Tips :
 > Si besoin, aidez-vous des éléments vu dans [le TP sur le Panie de commandes](https://github.com/oulanbator/cours_flutter_panier_de_commandes)
