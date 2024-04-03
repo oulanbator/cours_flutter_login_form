@@ -98,11 +98,125 @@ authService.login(credential).then((message) {
 });
 ```
 
+## Exercice 3-bis - Echouer à afficher des données protégées
+
+Pour le moment, on a réussit à se connecter, mais on ne peut toujorus pas accéder à des ressources protégées.
+Allons droit au but pour démontrer cela. J'ai créé une table "articles" qui n'est pas accessible aux utilisateurs non authentifiés (plus précisément, aux **requêtes** non authentifiées).
+
+- Créer une classe Article :
+```
+class Article {
+  final String title;
+  final String body;
+
+  Article({required this.title, required this.body});
+
+  Article.fromJson(Map<String, dynamic> json)
+      : title = json['title'] as String,
+        body = json['body'] as String;
+}
+```
+
+- Ajouter l'url de la ressource à vos constantes :
+```
+static String uriArticles = "$apiBaseUrl/items/articles";
+```
+
+- Créer une service (ArticleService) pour requêter les données de cette table
+```
+import 'dart:convert';
+
+import 'package:cours_flutter_login_form/constants.dart';
+import 'package:cours_flutter_login_form/model/article.dart';
+import 'package:http/http.dart' as http;
+
+class ArticleService {
+  Future<List<Article>> fetchArticles() async {
+    final response = await http.get(Uri.parse(Constants.uriArticles));
+
+    if (response.statusCode == 200) {
+      return parseArticles(response.body);
+    } else {
+      throw Exception(
+          'Failed to load articles. Status : ${response.statusCode}');
+    }
+  }
+
+  List<Article> parseArticles(String responseBody) {
+    final Map<String, dynamic> body = jsonDecode(responseBody);
+    final List<dynamic> data = body['data'];
+
+    return data.map((jsonElement) => Article.fromJson(jsonElement)).toList();
+  }
+}
+```
+
+- Mettre à jour HomePage pour afficher (ou plutôt essayer ^^) les articles dans un ListView. Voici le code de l'ensemble du fichier :
+```
+import 'package:cours_flutter_login_form/model/article.dart';
+import 'package:cours_flutter_login_form/service/article_service.dart';
+import 'package:cours_flutter_login_form/service/auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text("Home"),
+        actions: [
+          IconButton(
+            onPressed: () =>
+                Provider.of<AuthService>(context, listen: false).logout(),
+            icon: Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: FutureBuilder(
+        future: ArticleService().fetchArticles(),
+        builder: ((context, snapshot) {
+          // Si la data se charge correctement
+          if (snapshot.hasData) {
+            List<Article> articles = snapshot.data!;
+            return ListView.builder(
+              itemCount: articles.length,
+              itemBuilder: (context, index) => _listElement(articles[index]),
+            );
+          }
+          // Si on a une erreur
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          }
+          // En attendant la résolution du future
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }),
+      ),
+    );
+  }
+
+  _listElement(Article article) {
+    return ListTile(
+      title: Text(article.title),
+      subtitle: Text(article.body),
+    );
+  }
+}
+```
+
+
 ## Exercice 4 - Gestion des tokens
 
-A ce stade, nous avons une application avec une page Home protégée, on ne peut y accéder qu'une fois connecté. Mais il nous faut également protéger les ressources de notre API. Pour cela les requêtes doivent être authentifiées à l'aide du token que nous avons reçu lors de la connexion (pour le moment on n'a fait que réagir à une réponse HTTP 200, sans se préoccuper du contenu de la réponse).
+A ce stade, nous avons donc une application avec une page Home protégée (on ne peut y accéder qu'une fois "connecté"), mais il nous faut également accéder aux ressources protégées de notre API. Pour cela les requêtes doivent être authentifiées à l'aide du token que nous avons reçu lors de la connexion (pour le moment on n'a fait que réagir à une réponse HTTP 200, sans se préoccuper du contenu de la réponse).
 
-Nous allons utiliser une classe utilitaire pour recevoir la réponse de l'API. Voici cette réponse :
+Nous allons utiliser une classe utilitaire pour recevoir la réponse de l'API. Pour information, voici cette réponse :
 ```
 {
   "data": {
@@ -133,7 +247,7 @@ class AuthResponse {
 }
 ```
 
-> Notez que je parse directement **json > data > ...**. Cela va nous permettre d'écrire plus simplement notre méthode pour parser la réponse.
+> Notez que je parse directement **json > data > maClé**. Cela va nous permettre d'écrire plus simplement notre méthode pour parser la réponse.
 
 - Parsez les informations reçues :
 ```
@@ -152,7 +266,7 @@ if (response.statusCode == 200) {
 
 Ce que nous voulons c'est stocker les informations que nous avons reçues. Nous avons besoin de les stocker dans notre AuthService pour pouvoir les utiliser pendant que l'application est ouverte, et les stocker de manière plus durable si l'on souhaite garder en mémoire ces informations pour les prochaines fois où l'on ouvre l'application.
 
-Il y a plusieurs type de "local storage". Pour des données légères et non sensibles il y a par exemple le package shared_preferences qui implémente des fonctions utilitaires. Mais dans le cas d'informations sensibles comme ici, nous avons besoin de stocker les informations encryptées. Nous allons donc nous servir de flutter_secure_storage.
+Il y a plusieurs type de "local storage". Pour des données légères et non sensibles il y a par exemple le package shared_preferences qui implémente des fonctions utilitaires faciles d'utilisation. Mais dans le cas d'informations sensibles comme ici, nous avons besoin de stocker les informations encryptées. Nous allons donc nous servir de flutter_secure_storage. A l'utilisation ce n'est cependant pas plus compliqué que shared_preferences.
 
 - installer le package :
 ```
@@ -167,7 +281,7 @@ String? _accessTokenExpiration;
 String? _refreshToken;
 ```
 
-- Ajoutez ces clés à vos constantes pour éviter toute faute de frappe par la suite (leur valeur n'a pas vraiment d'importance, mais doit être unique)
+- Ajoutez ces clés à vos constantes pour éviter toute faute de frappe par la suite (leur valeur n'a pas vraiment d'importance, mais doit être unique pour chaque donnée que l'on souhaite stocker)
 ```
 static String storageKeyAccessToken = "bdew32324.access_token";
 static String storageKeyRefreshToken = "bdew32324.refresh_token";
