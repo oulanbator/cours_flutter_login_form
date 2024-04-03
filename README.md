@@ -135,7 +135,7 @@ class AuthResponse {
 
 > Notez que je parse directement **json > data > ...**. Cela va nous permettre d'écrire plus simplement notre méthode pour parser la réponse.
 
-- Parsez les informations reçues grâce à cette classe utilitaire :
+- Parsez les informations reçues :
 ```
 if (response.statusCode == 200) {
   var authResponse = AuthResponse.fromJson(json.decode(response.body));
@@ -148,7 +148,7 @@ if (response.statusCode == 200) {
 }
 ```
 
-> Nous allons tout de suite créer la méthode **_handleSuccessAuthResponse()** (notez qu'elle est asynchrone)
+> Nous allons bientôt créer la méthode **_handleSuccessAuthResponse()** (notez qu'elle est asynchrone)
 
 Ce que nous voulons c'est stocker les informations que nous avons reçues. Nous avons besoin de les stocker dans notre AuthService pour pouvoir les utiliser pendant que l'application est ouverte, et les stocker de manière plus durable si l'on souhaite garder en mémoire ces informations pour les prochaines fois où l'on ouvre l'application.
 
@@ -200,6 +200,42 @@ Future<void> _handleSuccessAuthResponse(AuthResponse authResponse) async {
     value: _refreshToken!,
   );
 }
+```
+
+Profitons-en pour tout de suite implémenter la procédure de logout comme il se doit.
+Lors de la déconnexion, nous devons invalider les tokens auprès de l'API et supprimer les informations que nous venons de stocker.
+
+- ajouter la ligne suivante à vos constantes :
+```
+static String uriLogout = "$apiBaseUrl/auth/logout";
+```
+
+- mettre à jour la méthode **logout()** :
+```
+void logout() async {
+  // Fait un call HTTP pour invalider les tokens
+  var payload = {"refresh_token": _refreshToken!};
+  await http.post(Uri.parse(Constants.uriLogout), body: json.encode(payload));
+  // Clean variables dans AuthManager
+  _accessToken = null;
+  _accessTokenExpiration = null;
+  _refreshToken = null;
+  // Supprime les valeurs du secure storage
+  await secureStorage.delete(key: Constants.storageKeyAccessToken);
+  await secureStorage.delete(key: Constants.storageKeyTokenExpire);
+  await secureStorage.delete(key: Constants.storageKeyRefreshToken);
+
+  isLoggedIn = false;
+  notifyListeners();
+}
+```
+
+Ouf !! Apparement, il n'y a pas grand chose qui a bougé.. on peut toujours se connecter et se déconnecter... mais maintenant nous avons un token pour faire des requêtes authentifiées !!
+
+> Il sera probablement nécessaire à se stade de stop puis relancer votre application !
+
+```
+
 ```
 
 
