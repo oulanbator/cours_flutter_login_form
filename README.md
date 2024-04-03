@@ -35,7 +35,7 @@ Enfin, ajoutez un bouton ou un IconButton (dans l'AppBar par exemple) afin de se
 - ce bouton doit également intéragir avec **AuthService** (appel de la méthode **logout()**)
 
 #### Tips :
-> Si besoin, aidez-vous des éléments vu dans [le TP sur le Panie de commandes](https://github.com/oulanbator/cours_flutter_panier_de_commandes)
+> Si besoin, aidez-vous des éléments vu dans [le TP sur le Panier de commandes](https://github.com/oulanbator/cours_flutter_panier_de_commandes)
 
 ## Exercice 3 - Connexion au backend
 
@@ -98,9 +98,13 @@ authService.login(credential).then((message) {
 });
 ```
 
+Tentez de vous connecter, avec le compte **admin@webturtle.fr** ou **bdew3@webturtle.fr** !
+Top, en principe vous devriez pouvoir vous connecter en vous authentifiant auprès de notre backend !
+
 ## Exercice 3-bis - Echouer à afficher des données protégées
 
 Pour le moment, on a réussit à se connecter, mais on ne peut toujorus pas accéder à des ressources protégées.
+
 Allons droit au but pour démontrer cela. J'ai créé une table "articles" qui n'est pas accessible aux utilisateurs non authentifiés (plus précisément, aux **requêtes** non authentifiées).
 
 - Créer une classe Article :
@@ -151,7 +155,7 @@ class ArticleService {
 }
 ```
 
-- Mettre à jour HomePage pour afficher (ou plutôt essayer ^^) les articles dans un ListView. Voici le code de l'ensemble du fichier :
+- Mettre à jour HomePage pour afficher (ou plutôt essayer d'afficher ^^) les articles dans un ListView. Voici le code de l'ensemble du fichier :
 ```
 import 'package:cours_flutter_login_form/model/article.dart';
 import 'package:cours_flutter_login_form/service/article_service.dart';
@@ -211,6 +215,7 @@ class HomePage extends StatelessWidget {
 }
 ```
 
+Que se passe t'il ?
 
 ## Exercice 4 - Gestion des tokens
 
@@ -353,7 +358,7 @@ Ouf !! Apparement, il n'y a pas grand chose qui a bougé.. on peut toujours se c
 
 L'authentification d'une requête se fait au travers des headers. Afin de permettre à tous nos services d'authentifier leurs requêtes, nous allons centraliser la création de ces headers dans notre AuthService.
 
-- Créer une méthode pour obtenir les headers :
+- Créer une méthode publique pour obtenir les headers (AuthService), celle-ci s'appuie sur la méthode **_getAccessToken()** que nous allons créer plus loin :
 ```
 Future<Map<String, String>> getAuthenticatedHeaders() async {
   final accessToken = await _getAccessToken();
@@ -366,7 +371,9 @@ Future<Map<String, String>> getAuthenticatedHeaders() async {
 
 > Notez que l'on ne renvoie pas directement notre **_accessToken**. En effet, celui-ci pourrait être expiré.
 
-Nous verrons plus loin la logique liée au rafraichissement du token. Pour le moment, renvoyons juste le token que nous avons stocké :
+Nous verrons plus loin la logique liée au rafraichissement du token. Pour le moment, renvoyons juste le token que nous avons stocké.
+
+- Implémenter la méthode **_getAccessToken()** :
 ```
 Future<String> _getAccessToken() async {
   return _accessToken!;
@@ -415,16 +422,76 @@ class HomePage extends StatelessWidget {
 ```
 body: FutureBuilder(
   future: ArticleService(authService: auth).fetchArticles(), // Ici
-  builder: ((context, snapshot) {
-    // Si la data se charge correctement
-    if (snapshot.hasData) {
-      List<Article> articles = snapshot.data!;
-      return ListView.builder(
-        itemCount: articles.length,
-        itemBuilder: (context, index) => _listElement(articles[index]),
-      );
-    }
+
 (... reste de notre code ...)
+```
+
+Nous pouvons maintenant charger les articles dans notre page home ! Nos requêtes sont authentifiées !
+Mais nous n'avons pas tout à fait fini..
+
+
+## Exercice 6 - Restaurer notre session grâce au secure storage, et gérer le rafraîchissement du token
+
+Bon nous y sommes presque mais il reste deux problèmes à régler. 
+Essayez (sous android ?) de vous authentifier, de fermer l'application lorsque vous êtes connectés, puis de relancer l'App. Que se passe t'il ?
+
+> Ce comportement pourrait être souhaitable pour une application hautement sensible. D'ailleurs, généralement les application bancaires, ou plus généralement liées au paiement, vous obligent à vous identifier à nouveau dès lors que l'application a été fermée, voire même lorsque vous l'avez 'minimisée' pendant trop longtemps. 
+
+Dans notre cas, nous souhaiterions toutefois que l'application se serve des informations stockées dans le secure storage pour rétablir notre connexion lorsque nous rouvrons l'App.
+
+- Implémentez un constructeur pour AuthService. Celui-ci doit pouvoir aller chercher les valeurs stockées dans le secure storage :
+```
+AuthService() {
+  _initAuthService();
+}
+```
+
+- Un constructeur ne peut pas être lui-même async, nous allons donc placer la logique dans la méthode **_initAuthService()** :
+```
+Future<void> _initAuthService() async {
+  // Récupère les valeurs dans le storage
+  _accessToken =
+      await secureStorage.read(key: Constants.storageKeyAccessToken);
+  _accessTokenExpiration =
+      await secureStorage.read(key: Constants.storageKeyTokenExpire);
+  _refreshToken =
+      await secureStorage.read(key: Constants.storageKeyRefreshToken);
+
+  // Si le token est valide, on peut modifier isLoggedIn et notifier les listeners
+  if (_isTokenValid()) {
+    isLoggedIn = true;
+    notifyListeners();
+  } else {
+    // Sinon, essayer de rafraichir le token
+    // _tryToRefreshTokenAndLogin();
+  }
+}
+```
+
+> Notez que nous avons séparé la logique de la méthode **_isTokenValid()** car nous allons nous en reservir plus loin. Notez également que l'on a gardé commentée la méthode **_tryToRefreshTokenAndLogin()**. On y reviendra plus loin.
+
+- Implémenter la méthode **_isTokenValid()** :
+```
+bool _isTokenValid() {
+  // Si nous avons un token et une date d'expiration, vérifier si le token est encore valide
+  if (_accessToken != null && _accessTokenExpiration != null) {
+    final expirationTime = DateTime.parse(_accessTokenExpiration!);
+    // Le token est valide si la date d'expiration est dans le futur
+    return expirationTime.isAfter(DateTime.now());
+  }
+  // Sinon, renvoie false
+  return false;
+}
+```
+
+-
+```
+
+```
+
+-
+```
+
 ```
 
 -
