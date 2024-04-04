@@ -565,39 +565,61 @@ Bravo ! Tout devrait fonctionner maintenant, c'est vraiment fini :) !
 
 ## Exercice 7 - Ajoutez une page pour créer un compte
 
+- Constantes à ajouter à l'App
+```
+static String directusAuthenticatedUserRole = "3d1cdd82-7531-42db-a5cd-21a455179590";
+static String directusUserCreatorToken = "phCG4_53ZGOShDuE1J3-pw27exBM7FBm";
+static String uriUsers = "$apiBaseUrl/users";
+```
+
+- Méthode pour créer un account
 ```
 Future<bool> createAccount(Credential credential) async {
-    bool success = false;
+  bool success = false;
 
-    var payload = {
-      "email": credential.email,
-      "password": credential.password,
-      "role": Constants.directusAuthenticatedUserRole
-    };
+  var payload = {
+    "email": credential.email,
+    "password": credential.password,
+    "role": Constants.directusAuthenticatedUserRole
+  };
 
-    var headers = {
-      'Authorization': 'Bearer ${Constants.directusUserCreatorToken}',
-      'Content-Type': 'application/json; charset=utf-8'
-    };
+  var headers = {
+    'Authorization': 'Bearer ${Constants.directusUserCreatorToken}',
+    'Content-Type': 'application/json; charset=utf-8'
+  };
 
-    final response = await http.post(
-      Uri.parse(Constants.uriUsers),
-      headers: headers,
-      body: jsonEncode(payload),
-    );
+  final response = await http.post(
+    Uri.parse(Constants.uriUsers),
+    headers: headers,
+    body: jsonEncode(payload),
+  );
 
-    if (response.statusCode == 200) {
-      success = true;
-    }
-
-    return success;
+  if (response.statusCode == 200) {
+    success = true;
   }
+
+  return success;
+}
 ```
 
+- Déplacer la logique de routing dans un composant LoginRouter :
+```
+class LoginRouter extends StatelessWidget {
+  const LoginRouter({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthService>(
+      builder: (context, auth, child) {
+        if (auth.isLoggedIn) {
+          return const HomePage();
+        } else {
+          return const LoginPage();
+        }
+      },
+    );
+  }
+}
 ```
-static String directusAuthenticatedUserRole =
-      "3d1cdd82-7531-42db-a5cd-21a455179590";
-  static String directusUserCreatorToken = "phCG4_53ZGOShDuE1J3-pw27exBM7FBm";
-  static String uriUsers = "$apiBaseUrl/users";
-```
+
+> Naviguez vers LoginRouter lorsque vous avez crée un utlisateur ou lorsque vous vous déconnectez.
