@@ -58,7 +58,9 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> _tryToRefreshToken() async {
-    bool success = false;
+    // On n'essaie de refresh que si on a un refreshToken disponible
+    if (_refreshToken == null) return false;
+
     final headers = {'Content-Type': 'application/json; charset=utf-8'};
     final body = {"refresh_token": _refreshToken!, "mode": "json"};
 
@@ -68,6 +70,7 @@ class AuthService extends ChangeNotifier {
       body: json.encode(body),
     );
 
+    bool success = false;
     if (response.statusCode == 200) {
       var authResponse = AuthResponse.fromJson(json.decode(response.body));
       await _handleSuccessAuthResponse(authResponse);
