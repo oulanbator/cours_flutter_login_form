@@ -561,3 +561,43 @@ Future<String> _getAccessToken() async {
 ```
 
 Bravo ! Tout devrait fonctionner maintenant, c'est vraiment fini :) ! 
+
+
+## Exercice 7 - Ajoutez une page pour créer un compte
+
+```
+Future<bool> createAccount(Credential credential) async {
+    bool success = false;
+
+    var payload = {
+      "email": credential.email,
+      "password": credential.password,
+      "role": Constants.directusAuthenticatedUserRole
+    };
+
+    var headers = {
+      'Authorization': 'Bearer ${Constants.directusUserCreatorToken}',
+      'Content-Type': 'application/json; charset=utf-8'
+    };
+
+    final response = await http.post(
+      Uri.parse(Constants.uriUsers),
+      headers: headers,
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      success = true;
+    }
+
+    return success;
+  }
+```
+
+
+```
+static String directusAuthenticatedUserRole =
+      "3d1cdd82-7531-42db-a5cd-21a455179590";
+  static String directusUserCreatorToken = "phCG4_53ZGOShDuE1J3-pw27exBM7FBm";
+  static String uriUsers = "$apiBaseUrl/users";
+```
