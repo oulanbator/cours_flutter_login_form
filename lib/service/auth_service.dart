@@ -165,4 +165,31 @@ class AuthService extends ChangeNotifier {
     logout();
     return "";
   }
+
+  Future<bool> createAccount(Credential credential) async {
+    bool success = false;
+
+    var payload = {
+      "email": credential.email,
+      "password": credential.password,
+      "role": Constants.directusAuthenticatedUserRole
+    };
+
+    var headers = {
+      'Authorization': 'Bearer ${Constants.directusUserCreatorToken}',
+      'Content-Type': 'application/json; charset=utf-8'
+    };
+
+    final response = await http.post(
+      Uri.parse(Constants.uriUsers),
+      headers: headers,
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      success = true;
+    }
+
+    return success;
+  }
 }

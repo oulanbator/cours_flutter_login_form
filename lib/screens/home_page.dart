@@ -1,4 +1,5 @@
 import 'package:cours_flutter_login_form/model/article.dart';
+import 'package:cours_flutter_login_form/screens/login_router.dart';
 import 'package:cours_flutter_login_form/service/article_service.dart';
 import 'package:cours_flutter_login_form/service/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +18,15 @@ class HomePage extends StatelessWidget {
         title: const Text("Home"),
         actions: [
           IconButton(
-            onPressed: () =>
-                Provider.of<AuthService>(context, listen: false).logout(),
+            onPressed: () {
+              Provider.of<AuthService>(context, listen: false).logout();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginRouter(),
+                ),
+              );
+            },
             icon: Icon(Icons.logout),
           ),
         ],
